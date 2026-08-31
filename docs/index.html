@@ -93,7 +93,40 @@
     cursor: pointer;
   }
   .direction-tab.active { border-color: var(--accent); color: var(--accent); }
-  .stop-list { list-style: none; margin: 0; padding: 0; max-height: 420px; overflow-y: auto; }
+  .track-container {
+    position: relative;
+    padding-left: 2.1rem;
+    max-height: 460px;
+    overflow-y: auto;
+  }
+  .track-line {
+    position: absolute;
+    left: .78rem;
+    top: 1.1rem;
+    bottom: 1.1rem;
+    width: 3px;
+    background: var(--route-color, var(--accent));
+    opacity: .3;
+    border-radius: 2px;
+  }
+  .train-marker {
+    position: absolute;
+    left: .32rem;
+    top: 1.1rem;
+    font-size: 1.05rem;
+    line-height: 1;
+    animation: train-move var(--train-duration, 10s) linear infinite;
+    filter: drop-shadow(0 0 5px var(--route-color, var(--accent)));
+    z-index: 2;
+  }
+  @keyframes train-move {
+    0% { top: 1.1rem; }
+    100% { top: calc(100% - 1.1rem); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .train-marker { animation: none; top: 1.1rem; }
+  }
+  .stop-list { list-style: none; margin: 0; padding: 0; position: relative; }
   .stop-list li {
     padding: .55rem .3rem;
     border-bottom: 1px solid var(--border);
@@ -101,6 +134,20 @@
     align-items: center;
     gap: .7rem;
     font-size: .92rem;
+    position: relative;
+  }
+  .stop-list li::before {
+    content: "";
+    position: absolute;
+    left: -1.53rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--route-color, var(--accent));
+    border: 2px solid var(--panel);
+    z-index: 1;
   }
   .stop-list li:last-child { border-bottom: none; }
   .stop-list .idx {
@@ -160,7 +207,11 @@
     <p class="route-title"><span class="swatch" id="route-swatch"></span><span id="route-title-text"></span></p>
     <p class="route-sub" id="route-sub"></p>
     <div class="direction-tabs" id="direction-tabs"></div>
-    <ol class="stop-list" id="stop-list"></ol>
+    <div class="track-container" id="track-container">
+      <div class="track-line"></div>
+      <div class="train-marker" id="train-marker" aria-hidden="true">🚈</div>
+      <ol class="stop-list" id="stop-list"></ol>
+    </div>
   </div>
 
   <div class="info">
@@ -188,7 +239,11 @@ const routeSwatch = document.getElementById("route-swatch");
 const routeTitleText = document.getElementById("route-title-text");
 const routeSub = document.getElementById("route-sub");
 const directionTabs = document.getElementById("direction-tabs");
+const trackContainer = document.getElementById("track-container");
+const trainMarker = document.getElementById("train-marker");
 const stopList = document.getElementById("stop-list");
+
+const TRAIN_ICONS = { LRT: "🚈", MRT: "🚇", MRL: "🚝", BRT: "🚌", default: "🚌" };
 
 let feedIndex = [];
 let currentFeedData = null;
@@ -245,6 +300,11 @@ function renderDirection(route, directionIndex) {
     ? `Ke arah: ${direction.headsign} · ${direction.stops.length} perhentian`
     : `${direction.stops.length} perhentian`;
 
+  // Animation speed scales with the number of stops so the train takes
+  // roughly the same time per-stop across short and long lines.
+  const duration = Math.max(6, Math.min(40, direction.stops.length * 1.4));
+  trackContainer.style.setProperty("--train-duration", `${duration}s`);
+
   [...directionTabs.children].forEach((tab, i) => tab.classList.toggle("active", i === directionIndex));
 }
 
@@ -255,6 +315,8 @@ function showRoute(routeId) {
 
   routeTitleText.textContent = route.longName || route.shortName || route.routeId;
   routeSwatch.style.background = route.color || "#39ff9c";
+  trackContainer.style.setProperty("--route-color", route.color || "#39ff9c");
+  trainMarker.textContent = TRAIN_ICONS[route.category] || TRAIN_ICONS.default;
 
   directionTabs.innerHTML = "";
   route.directions.forEach((direction, i) => {
