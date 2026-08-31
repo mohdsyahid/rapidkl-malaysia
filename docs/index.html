@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RapidKL Malaysia — Laluan LRT, MRT, Monorail, BRT & Bas</title>
+<meta name="description" content="Semak laluan dan senarai stesen untuk semua line LRT/MRT/Monorail/BRT dan bas RapidKL. Data rasmi GTFS, JSON API percuma untuk developer." />
+<style>
+  :root {
+    --bg: #0b0e14;
+    --panel: #121722;
+    --accent: #39ff9c;
+    --accent2: #00c8ff;
+    --text: #e8eef7;
+    --muted: #8592a6;
+    --border: #232b3a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: radial-gradient(circle at top, #131a26 0%, #0b0e14 60%);
+    color: var(--text);
+    line-height: 1.55;
+  }
+  header { padding: 3rem 1.5rem 1.5rem; text-align: center; position: relative; }
+  header h1 {
+    font-size: clamp(1.5rem, 4vw, 2.3rem);
+    margin: 0 0 .5rem;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .7rem;
+  }
+  header h1 .emoji { -webkit-background-clip: initial; background-clip: initial; color: initial; }
+  header p { color: var(--muted); max-width: 640px; margin: 0 auto; }
+  main { max-width: 760px; margin: 0 auto; padding: 0 1.25rem 3rem; }
+  .author-card {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: .4rem .9rem .4rem .4rem;
+    text-decoration: none;
+    color: var(--text);
+  }
+  .author-card:hover { border-color: var(--accent); }
+  .author-card img { width: 32px; height: 32px; border-radius: 50%; display: block; }
+  .author-card .author-text { display: flex; flex-direction: column; line-height: 1.2; }
+  .author-card .author-name { font-size: .8rem; font-weight: 700; }
+  .author-card .author-sub { font-size: .68rem; color: var(--muted); }
+  @media (max-width: 600px) { .author-card { position: static; margin: 0 auto 1rem; width: fit-content; } }
+  .controls { display: flex; flex-direction: column; gap: .6rem; margin: 1.8rem 0 1.2rem; }
+  select {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: .7rem .9rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    width: 100%;
+  }
+  select:disabled { opacity: .5; }
+  select:focus { outline: none; border-color: var(--accent); }
+  .status { font-size: .82rem; color: var(--muted); }
+  .route-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.4rem 1.6rem;
+    margin-bottom: 1.5rem;
+  }
+  .route-title { margin: 0 0 .2rem; font-size: 1.15rem; display: flex; align-items: center; gap: .5rem; }
+  .route-title .swatch { width: 14px; height: 14px; border-radius: 4px; display: inline-block; flex-shrink: 0; }
+  .route-sub { color: var(--muted); font-size: .85rem; margin-bottom: 1rem; }
+  .direction-tabs { display: flex; gap: .5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .direction-tab {
+    background: #0b0e14;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: .4rem .9rem;
+    border-radius: 999px;
+    font-size: .8rem;
+    cursor: pointer;
+  }
+  .direction-tab.active { border-color: var(--accent); color: var(--accent); }
+  .stop-list { list-style: none; margin: 0; padding: 0; max-height: 420px; overflow-y: auto; }
+  .stop-list li {
+    padding: .55rem .3rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    font-size: .92rem;
+  }
+  .stop-list li:last-child { border-bottom: none; }
+  .stop-list .idx {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    font-size: .75rem;
+    width: 1.8rem;
+    flex-shrink: 0;
+  }
+  .info {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.3rem 1.6rem;
+    font-size: .88rem;
+    color: var(--muted);
+  }
+  .info h2 { color: var(--text); font-size: 1.05rem; margin-top: 0; }
+  .info code {
+    background: #0b0e14;
+    padding: .1rem .4rem;
+    border-radius: 4px;
+    color: var(--accent);
+    font-size: .8rem;
+    word-break: break-all;
+  }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: .82rem;
+    padding: 1.5rem 1rem 3rem;
+  }
+  footer a { color: var(--accent2); }
+</style>
+</head>
+<body>
+<header>
+  <a class="author-card" href="https://github.com/mohdsyahid" target="_blank" rel="noopener">
+    <img src="https://avatars.githubusercontent.com/u/8221580?v=4" alt="Mohd Syahid" loading="lazy" />
+    <span class="author-text">
+      <span class="author-name">Mohd Syahid</span>
+      <span class="author-sub">@mohdsyahid on GitHub</span>
+    </span>
+  </a>
+  <h1><span class="emoji">🚈</span> RapidKL Malaysia</h1>
+  <p>Semak laluan dan senarai stesen untuk semua line LRT, MRT, Monorail, BRT, dan bas RapidKL (termasuk bas feeder MRT) — data rasmi GTFS, percuma untuk digunakan oleh mana-mana aplikasi melalui JSON API.</p>
+</header>
+
+<main>
+  <div class="controls">
+    <select id="feed-select" aria-label="Pilih jenis pengangkutan"><option value="">Memuatkan...</option></select>
+    <select id="route-select" aria-label="Pilih laluan" disabled><option value="">Pilih jenis pengangkutan dahulu</option></select>
+    <span class="status" id="status-line"></span>
+  </div>
+
+  <div class="route-panel" id="route-panel" hidden>
+    <p class="route-title"><span class="swatch" id="route-swatch"></span><span id="route-title-text"></span></p>
+    <p class="route-sub" id="route-sub"></p>
+    <div class="direction-tabs" id="direction-tabs"></div>
+    <ol class="stop-list" id="stop-list"></ol>
+  </div>
+
+  <div class="info">
+    <h2>JSON API percuma</h2>
+    <p>Data penuh untuk setiap jenis pengangkutan (semua laluan & susunan stesen ikut arah) tersedia sebagai JSON statik. Contoh (LRT/MRT/Monorail/BRT):</p>
+    <p><code>https://mohdsyahid.github.io/rapidkl-malaysia/data/rail.json</code></p>
+    <p>Fail lain: <code>data/bus-kl.json</code> (bas bandar RapidKL), <code>data/bus-mrtfeeder.json</code> (bas feeder MRT), <code>data/feeds.json</code> (indeks semua fail). Data dikemas kini mingguan melalui GitHub Actions, sumber rasmi <a href="https://api.data.gov.my/gtfs-static/prasarana" target="_blank" rel="noopener">GTFS static data.gov.my (Prasarana)</a>.</p>
+    <p><strong>Nota:</strong> data ini merangkumi laluan, stesen/perhentian, dan urutan perjalanan sahaja — <strong>tiada data tambang/tol</strong>. Format GTFS rasmi tidak menyediakan kadar tambang, dan laman rasmi <a href="https://myrapid.com.my" target="_blank" rel="noopener">myrapid.com.my</a> disekat semakan bot (captcha), jadi tidak dapat dikikis secara automatik.</p>
+  </div>
+</main>
+
+<footer>
+  Data dari <a href="https://api.data.gov.my/gtfs-static/prasarana" target="_blank" rel="noopener">data.gov.my GTFS static (Prasarana)</a>. Projek ini tidak berkaitan secara rasmi dengan Prasarana atau RapidKL.
+  <br />
+  Dibuat &amp; diselenggara oleh <a href="https://github.com/mohdsyahid" target="_blank" rel="noopener">@mohdsyahid</a> ·
+  Kod sumber: <a href="https://github.com/mohdsyahid/rapidkl-malaysia" target="_blank" rel="noopener">GitHub</a>
+</footer>
+
+<script>
+const feedSelect = document.getElementById("feed-select");
+const routeSelect = document.getElementById("route-select");
+const statusLine = document.getElementById("status-line");
+const routePanel = document.getElementById("route-panel");
+const routeSwatch = document.getElementById("route-swatch");
+const routeTitleText = document.getElementById("route-title-text");
+const routeSub = document.getElementById("route-sub");
+const directionTabs = document.getElementById("direction-tabs");
+const stopList = document.getElementById("stop-list");
+
+let feedIndex = [];
+let currentFeedData = null;
+let currentRoute = null;
+
+function resetSelect(select, placeholder) {
+  select.innerHTML = "";
+  const opt = document.createElement("option");
+  opt.value = "";
+  opt.textContent = placeholder;
+  select.appendChild(opt);
+  select.disabled = true;
+}
+
+async function loadFeed(file) {
+  routePanel.hidden = true;
+  resetSelect(routeSelect, "Memuatkan...");
+  statusLine.textContent = "Memuatkan data...";
+  try {
+    const res = await fetch(`data/${file}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    currentFeedData = await res.json();
+
+    routeSelect.innerHTML = "";
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Pilih laluan";
+    routeSelect.appendChild(placeholder);
+    for (const r of currentFeedData.routes) {
+      const opt = document.createElement("option");
+      opt.value = r.routeId;
+      opt.textContent = r.longName || r.shortName || r.routeId;
+      routeSelect.appendChild(opt);
+    }
+    routeSelect.disabled = false;
+    statusLine.textContent = `${currentFeedData.routeCount} laluan, ${currentFeedData.stopCount} stesen/perhentian. Kemas kini: ${new Date(currentFeedData.generatedAt).toLocaleDateString("ms-MY")}`;
+  } catch (err) {
+    statusLine.textContent = `Gagal memuatkan data: ${err.message}`;
+  }
+}
+
+function renderDirection(route, directionIndex) {
+  const direction = route.directions[directionIndex];
+  if (!direction) return;
+
+  stopList.innerHTML = "";
+  direction.stops.forEach((stop, i) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="idx">${i + 1}</span><span>${stop.name || stop.stopId}</span>`;
+    stopList.appendChild(li);
+  });
+
+  routeSub.textContent = direction.headsign
+    ? `Ke arah: ${direction.headsign} · ${direction.stops.length} perhentian`
+    : `${direction.stops.length} perhentian`;
+
+  [...directionTabs.children].forEach((tab, i) => tab.classList.toggle("active", i === directionIndex));
+}
+
+function showRoute(routeId) {
+  const route = currentFeedData.routes.find((r) => r.routeId === routeId);
+  if (!route) return;
+  currentRoute = route;
+
+  routeTitleText.textContent = route.longName || route.shortName || route.routeId;
+  routeSwatch.style.background = route.color || "#39ff9c";
+
+  directionTabs.innerHTML = "";
+  route.directions.forEach((direction, i) => {
+    const tab = document.createElement("button");
+    tab.className = "direction-tab" + (i === 0 ? " active" : "");
+    tab.textContent = direction.headsign || `Arah ${i + 1}`;
+    tab.addEventListener("click", () => renderDirection(route, i));
+    directionTabs.appendChild(tab);
+  });
+
+  if (route.directions.length > 0) renderDirection(route, 0);
+  routePanel.hidden = false;
+}
+
+feedSelect.addEventListener("change", () => {
+  if (feedSelect.value) loadFeed(feedSelect.value);
+});
+
+routeSelect.addEventListener("change", () => {
+  if (routeSelect.value) showRoute(routeSelect.value);
+});
+
+(async function init() {
+  try {
+    const res = await fetch("data/feeds.json");
+    const payload = await res.json();
+    feedIndex = payload.feeds;
+
+    feedSelect.innerHTML = "";
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Pilih jenis pengangkutan";
+    feedSelect.appendChild(placeholder);
+    for (const f of feedIndex) {
+      const opt = document.createElement("option");
+      opt.value = f.file;
+      opt.textContent = `${f.label} (${f.routeCount} laluan)`;
+      feedSelect.appendChild(opt);
+    }
+    statusLine.textContent = `${feedIndex.length} jenis pengangkutan tersedia.`;
+  } catch (err) {
+    statusLine.textContent = `Gagal memuatkan senarai: ${err.message}`;
+  }
+})();
+</script>
+</body>
+</html>

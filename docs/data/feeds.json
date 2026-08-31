@@ -1,0 +1,26 @@
+{
+  "generatedAt": "2026-08-31T11:32:29.301Z",
+  "feeds": [
+    {
+      "feed": "rapid-rail-kl",
+      "label": "LRT / MRT / Monorail / BRT",
+      "file": "rail.json",
+      "routeCount": 8,
+      "stopCount": 187
+    },
+    {
+      "feed": "rapid-bus-kl",
+      "label": "RapidKL city buses",
+      "file": "bus-kl.json",
+      "routeCount": 137,
+      "stopCount": 4053
+    },
+    {
+      "feed": "rapid-bus-mrtfeeder",
+      "label": "MRT feeder buses",
+      "file": "bus-mrtfeeder.json",
+      "routeCount": 92,
+      "stopCount": 2112
+    }
+  ]
+}

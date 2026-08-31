@@ -1,0 +1,14 @@
+{
+  "name": "rapidkl-malaysia",
+  "version": "1.0.0",
+  "description": "Static JSON API + web page for RapidKL routes, lines, and stop sequences (LRT, MRT, Monorail, BRT, city buses, MRT feeder buses). Auto-updated weekly via GitHub Actions.",
+  "main": "src/generate.js",
+  "scripts": {
+    "generate": "node src/generate.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": ["malaysia", "rapidkl", "lrt", "mrt", "monorail", "brt", "gtfs", "prasarana", "open-data"],
+  "author": "Mohd Syahid (https://github.com/mohdsyahid)",
+  "license": "MIT",
+  "engines": { "node": ">=18" }
+}

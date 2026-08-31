@@ -1,0 +1,35 @@
+name: Update route data
+
+# Regenerates all feed JSON files weekly. RapidKL routes/stations change
+# rarely (new line openings, occasional route revisions), so a weekly
+# run is enough to keep the static API current.
+on:
+  schedule:
+    - cron: "0 19 * * 0" # 19:00 UTC Sunday = 03:00 MYT Monday
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate route data
+        run: node src/generate.js
+
+      - name: Commit updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data/*.json
+          git diff --cached --quiet || git commit -m "chore: refresh route data [skip ci]"
+          git push
